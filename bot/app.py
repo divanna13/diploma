@@ -27,7 +27,7 @@ class Connect():
     def __del__(self):
         self.connection.close()
 
-token:str = ''
+token:str = '6909703788:AAH7gSDXAWb9b64VlZNTlp-527GDksG9uPI'
 bot=telebot.TeleBot(token)
 users:dict = {}
 
