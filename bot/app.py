@@ -3,100 +3,45 @@ from telebot import types
 from datetime import datetime
 import pandas as pd
 import sqlite3
+import logging
 
-class Connect():
-    def __init__(self, name:str) -> None:
-        self.connection = sqlite3.connect(name)
-        self.cursor = self.connection.cursor()
-        self.cursor.executescript('''
-            CREATE TABLE IF NOT EXISTS Letters (
-                   user_id INTEGER PRIMARY KEY,
-                   telegram_id INTEGER,
-                   fio TEXT NOT NULL,
-                   letter TEXT NOT NULL,
-                   date TEXT
-            )
-        ''')
-        self.connection.commit()
-                    
-    def insert(self, telegram_id:int, fio:str, letter:str, date:str) -> None:
-        self.cursor = self.connection.cursor()
-        self.cursor.execute('INSERT INTO Letters (telegram_id, fio, letter, date) VALUES (?, ?, ?, ?)', (telegram_id, fio, letter, date))
-        self.connection.commit()
-    
-    def __del__(self):
-        self.connection.close()
-#singer_children_bot
-token:str = '7686258574:AAHDcexxxffu3lZ8-ddAon-UTpPWWQpreuQ'
-bot=telebot.TeleBot(token)
-users:dict = {}
+logging.basicConfig(level=logging.INFO)
 
 
-@bot.message_handler(commands=['start'])
-def start_message(message):
-    chat_id:int = message.chat.id
-    users[chat_id] = {}
-    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-    buttons = [
-                types.KeyboardButton("Написать письмо в капсулу времени"),
-                types.KeyboardButton("Выгрузить данные в XLS")
-            ]
-    keyboard.add(*buttons)
-    bot.send_message(chat_id, "Привет!", reply_markup=keyboard)
-    
+# singer_children_bot
+API_TOKEN = '7686258574:AAHDcexxxffu3lZ8-ddAon-UTpPWWQpreuQ'
+ADMIN_ID = '0000000'
+
+
+bot = telebot.TeleBot(API_TOKEN)
+
+
+# Handle '/start' and '/help'
+@bot.message_handler(commands=['help', 'start'])
+def send_welcome(message):
+    bot.reply_to(message, """\
+Hi there, I am EchoBot.
+I am here to echo your kind words back to you. Just say anything nice and I'll say the exact same thing to you!\
+""")
+
+
+# Handle all other messages with content_type 'text' (content_types defaults to ['text'])
+@bot.message_handler(func=lambda message: True)
+def echo_message(message):
+    bot.reply_to(message, message.text)
+
+@bot.message_handler(commands=['button'])
+def button_message(message):
+    markup=types.ReplyKeyboardMarkup(resize_keyboard=True)
+    item1=types.KeyboardButton("Кнопка")
+    markup.add(item1)
+    bot.send_message(message.chat.id,'Выберите что вам надо',reply_markup=markup)
+
 @bot.message_handler(content_types='text')
-def choose(message):
-    if message.text == 'Написать письмо в капсулу времени':
-        bot.send_message(message.chat.id, 'Введите вашу фамилию, имя, отчество')
-        bot.register_next_step_handler(message, save_fio)
-    if message.text == 'Написать послание':
-        bot.send_message(message.chat.id, 'Введите ваше послание')
-        bot.register_next_step_handler(message, save_letter)
-    if message.text == 'Сохранить':
-        telegram_id:int = message.chat.id
-        fio:str = users[telegram_id]['fio']
-        letter:str = users[telegram_id]["letter"]
-        date = datetime.now().strftime('%d/%m/%Y, %H:%M')
-        connect = Connect('database.db')
-        connect.insert(telegram_id, fio, letter, date)
-        bot.send_message(message.chat.id, 'Спасибо! Ваша капсула сохранена!')
-        start_message(message) 
-    if message.text == 'Выгрузить данные в XLS':
-        connect = Connect('database.db')
-        conn = connect.connection
-        df = pd.read_sql('select * from Letters', conn)
-        df.to_excel('result.xlsx', index=False)
-        bot.send_message(message.chat.id, 'Данные выгружены.')
-        file = open('result.xlsx', 'rb')
-        bot.send_document(message.chat.id, file)
-    if message.text == 'Отмена':
-        start_message(message)  
-    
-        
-def save_fio(message):
-    chat_id:int = message.chat.id
-    fio:str = message.text
-    users[chat_id]['fio'] = fio
-    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-    buttons = [
-                types.KeyboardButton("Написать послание"), 
-                types.KeyboardButton("Отмена")
-            ]
-    keyboard.add(*buttons)
-    bot.send_message(chat_id, 'Выберите:', reply_markup=keyboard)
-            
-def save_letter(message):
-    chat_id:int = message.chat.id
-    letter:str = message.text
-    users[chat_id]['letter'] = letter
-    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-    buttons = [
-                types.KeyboardButton("Сохранить"),
-                types.KeyboardButton("Отмена")
-            ]
-    keyboard.add(*buttons)
-    bot.send_message(chat_id, f'ФИО:    {users[chat_id]["fio"]}\nПисьмо:    {users[chat_id]["letter"]}\n', reply_markup=keyboard)
+def message_reply(message):
+    if message.text=="Кнопка":
+        bot.send_message(message.chat.id,"https://habr.com/")
 
-if __name__ == '__main__':
-    print('Бот запущен!')
-    bot.polling()
+
+
+bot.infinity_polling()
