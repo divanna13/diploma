@@ -26,6 +26,7 @@ class Connect():
     
     def __del__(self):
         self.connection.close()
+        
 #singer_children_bot
 token:str = '7686258574:AAHDcexxxffu3lZ8-ddAon-UTpPWWQpreuQ'
 bot=telebot.TeleBot(token)

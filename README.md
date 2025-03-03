@@ -12,8 +12,7 @@ parent
         has_many children -> accounts
       
 children
-    first_name string
-    last_name string
+    fio string
     parent_id integer
     group_id integer
 
@@ -48,6 +47,10 @@ attending #посещаемость
 Сценарии родителя:
 
     1. Подключиться к боту
+        - Сообщение: "Здравствуйте, вы подключили бот для записи вашего ребенка или детей на занятия по хоровому пению.
+        
+        Введите фамилию имя ребенка, например: Иванов Иван и нажмите отправить.
+        "        
     2. Добавление ребенка "Введите ФИО ребенка"
     
 
@@ -80,3 +83,6 @@ attending #посещаемость
     # запуск бота
     python app.py
     ```
+
+Добавить в проект https://github.com/clutchski/caribou для миграций
+
