@@ -69,3 +69,80 @@ INSERT INTO children (fio, parent_id, group_id) VALUES (?, ?, ?)
     def __del__(self):
         self.connection.close()
 
+class Group():
+    def __init__(self, name:str=DB_NAME) -> None:
+        self.connection = sqlite3.connect(name)
+        self.cursor = self.connection.cursor()
+        self.cursor.executescript('''
+            CREATE TABLE IF NOT EXISTS groups (
+                group_id INTEGER PRIMARY KEY,
+                name TEXT NOT NULL,
+                price INTEGER NOT NULL,
+                garden_id INTEGER NOT NULL,
+                FOREIGN KEY(garden_id) REFERENCES gardens(garden_id)
+            );
+        ''')
+        self.connection.commit()
+                    
+    def insert(self, name:str, price:int, garden_id:int) -> None:
+        self.cursor = self.connection.cursor()
+        self.cursor.execute('''
+INSERT INTO groups (name, price, garden_id) VALUES (?, ?, ?)
+''', 
+            (name, price, garden_id))
+        self.connection.commit()
+    
+    def __del__(self):
+        self.connection.close()
+
+
+class Garden():
+    def __init__(self, name:str=DB_NAME) -> None:
+        self.connection = sqlite3.connect(name)
+        self.cursor = self.connection.cursor()
+        self.cursor.executescript('''
+            CREATE TABLE IF NOT EXISTS gardens (
+                garden_id INTEGER PRIMARY KEY,
+                name TEXT NOT NULL
+            );
+        ''')
+        self.connection.commit()
+                    
+    def insert(self, name:str) -> None:
+        self.cursor = self.connection.cursor()
+        self.cursor.execute('''
+INSERT INTO gardens (name) VALUES (?)
+''', 
+            (name))
+        self.connection.commit()
+    
+    def __del__(self):
+        self.connection.close()
+
+class Attendeng():
+    def __init__(self, name:str=DB_NAME) -> None:
+        self.connection = sqlite3.connect(name)
+        self.cursor = self.connection.cursor()
+        self.cursor.executescript('''
+            CREATE TABLE IF NOT EXISTS attendings (
+                attending_id INTEGER PRIMARY KEY,
+                created_at TEXT NOT NULL,
+                child_id INTEGER NOT NULL,
+                group_id INTEGER NOT NULL,
+                FOREIGN KEY(child_id) REFERENCES children(child_id),
+                FOREIGN KEY(group_id) REFERENCES groups(group_id)              
+            );
+        ''')
+        self.connection.commit()
+                    
+    def insert(self, child_id:int, group_id:int) -> None:
+        created_at = datetime.now().strftime('%d/%m/%Y, %H:%M')
+        self.cursor = self.connection.cursor()
+        self.cursor.execute('''
+INSERT INTO attendings (child_id, group_id, created_at) VALUES (?, ?, ?)
+''', 
+            (child_id, group_id, created_at))
+        self.connection.commit()
+    
+    def __del__(self):
+        self.connection.close()
