@@ -86,3 +86,5 @@ attending #посещаемость
 
 Добавить в проект https://github.com/clutchski/caribou для миграций
 
+Используем steps для многошаговых мастеров-ввода данных от клиента https://github.com/eternnoir/pyTelegramBotAPI/blob/master/examples/step_example.py
+
