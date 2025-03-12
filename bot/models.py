@@ -99,6 +99,11 @@ INSERT INTO groups (name, price, garden_id) VALUES (?, ?, ?)
             (name, price, garden_id))
         self.connection.commit()
     
+    def all(self):
+        self.cursor = self.connection.cursor()
+        self.cursor.execute('SELECT * FROM groups ORDER BY name')
+        return self.cursor.fetchall() 
+
     def __del__(self):
         self.connection.close()
 
@@ -123,6 +128,27 @@ class Garden():
         self.cursor = self.connection.cursor()
         self.cursor.execute('SELECT * FROM gardens ORDER BY name')
         return self.cursor.fetchall() 
+
+    def all_with_groups(self):
+        self.cursor = self.connection.cursor()
+        self.cursor.execute('''
+        SELECT 
+            gardens.garden_id, 
+            gardens.name as garden_name,
+            price,
+            groups.name as group_name,
+            groups.group_id as group_id
+        FROM gardens
+        INNER JOIN groups ON groups.garden_id = gardens.garden_id
+        ''')
+        return self.cursor.fetchall() 
+
+    def all_with_groups_dict(self):
+        l = all_with_groups()
+        list_accumulator = []
+        for item in l:
+            list_accumulator.append({k: item[k] for k in item.keys()})
+        return list_accumulator
 
     def __del__(self):
         self.connection.close()

@@ -38,6 +38,7 @@ def send_welcome(message):
             'Оплаты': {'callback_data': 'payments'},
         }, row_width=2)
         bot.send_message(message.chat.id, "Здравствуйте, администратор бота!\nВыберите команду:", reply_markup=markup)
+        bot.clear_step_handler_by_chat_id(message.chat.id)
 
 # Handle all other messages with content_type 'text' (content_types defaults to ['text'])
 @bot.message_handler(func=lambda message: True)
@@ -81,8 +82,22 @@ def handle_query(cb):
                     bot.send_message(cb.from_user.id, ' - '+g[1])
             else:
                 bot.send_message(cb.from_user.id,"Нет добавленных садиков! Начните добавлять!")
-            bot.send_message(cb.from_user.id,"Чтобы добавить новый садик введите имя садика и его номер и нажмите отправить:")
-            bot.register_next_step_handler(cb.message, process_garden_name_step)            
+
+            markup = quick_markup({'Возврат в главное меню': {'callback_data': '/start'}}, row_width=1)                
+            bot.send_message(cb.from_user.id,"Чтобы добавить новый садик введите имя садика и его номер и нажмите отправить:", reply_markup=markup)
+            bot.register_next_step_handler(cb.message, process_garden_name_step)           
+
+        if cb.data == "groups":
+            models.Group()
+            gardens = models.Garden().all_with_groups_dict()  
+            # Добавить вывод списка групп для садиков, переменная gardens содержит массив словарей
+            # [{garden_id: 1, garden_name: "Прекрасный Сад Будущего №5", price: 100, group_name: "Скворцы", group_id: 1}, ...]
+            if len(gardens) > 0:
+                bot.send_message(cb.from_user.id,"Существующие садики/группы:")
+                for g in gardens:
+                    bot.send_message(cb.from_user.id, f' - {g["garden_name"]} / {g["group_name"]} ({g["price"]} ₽)')
+            else:
+                bot.send_message(cb.from_user.id,"Нет добавленных садиков и групп! Начните добавлять!")
 
 def process_garden_name_step(message):
     try:
