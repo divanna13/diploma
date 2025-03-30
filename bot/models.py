@@ -45,7 +45,6 @@ ON CONFLICT(telegram_id) DO UPDATE SET
     def __del__(self):
         self.connection.close()
 
-
 class Children():
     def __init__(self, name:str=DB_NAME) -> None:
         self.connection = sqlite3.connect(name)
@@ -68,6 +67,20 @@ INSERT INTO children (fio, parent_id, group_id) VALUES (?, ?, ?)
             (fio, parent_id, group_id))
         self.connection.commit()
     
+    def all_with_groups_and_parents(self):
+        self.cursor = self.connection.cursor()
+        self.cursor.execute('''
+        SELECT 
+            children.child_id, 
+            children.fio,
+            groups.name as group_name,
+            parent.fio as parent_fio
+        FROM children
+        INNER JOIN groups ON children.group_id = groups.group_id
+        INNER JOIN parents ON children.parent_id = parents.parent_id
+        ''')
+        return self.cursor.fetchall() 
+
     def ungrouped(self):
         self.cursor = self.connection.cursor()
         self.cursor.execute('SELECT * FROM children WHERE group_id = 0')
@@ -176,6 +189,11 @@ class Attendeng():
 INSERT INTO attendings (child_id, group_id, created_at) VALUES (?, ?, ?)
 ''', (child_id, group_id, created_at))
         self.connection.commit()
+    
+    def all(self):
+        self.cursor = self.connection.cursor()
+        self.cursor.execute('SELECT * FROM attendings ORDER BY created_at DESC')
+        return self.cursor.fetchall() 
     
     def __del__(self):
         self.connection.close()

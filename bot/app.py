@@ -31,10 +31,10 @@ def send_welcome(message):
         parent.insert(message.from_user.id, message.from_user.username, fio, "")
     else: # ADMIN
         markup = quick_markup({
-            f'Новых детей {len(models.Children().ungrouped())}': {'callback_data': 'new_childrens'},
-            f'Дет.Сады {len(models.Garden().all())}': {'callback_data': 'gardens'},
-            'Группы': {'callback_data': 'groups'},            
-            'Посещения': {'callback_data': 'attendings'},
+            f'Добавить детей ({len(models.Children().ungrouped())})': {'callback_data': 'new_childrens'},
+            f'Дет.Сады ({len(models.Garden().all())})': {'callback_data': 'gardens'},
+            f'Группы ({len(models.Group().all())})': {'callback_data': 'groups'},            
+            f'Посещения ({len(models.Attendeng().all())})': {'callback_data': 'attendings'},
             'Оплаты': {'callback_data': 'payments'},
         }, row_width=2)
         bot.send_message(message.chat.id, "Здравствуйте, администратор бота!\nВыберите команду:", reply_markup=markup)
@@ -74,6 +74,17 @@ def message_reply(message):
 @bot.callback_query_handler(func=lambda call: True)
 def handle_query(cb):
     if cb.from_user.id == ADMIN_ID:
+        if cb.data == "new_childrens":
+            childs = models.Children().all_with_groups_and_parents()
+            if len(childs) > 0:
+                bot.send_message(cb.from_user.id,"Добавленные дети:")
+                for g in childs:
+                    bot.send_message(cb.from_user.id, ' - '+g[1])
+            else:
+                bot.send_message(cb.from_user.id,"Нет добавленных детей! Начните добавлять!")   
+            markup = quick_markup({'Возврат в главное меню': {'callback_data': '/start'}}, row_width=1)                
+            bot.send_message(cb.from_user.id,"Чтобы добавить ребенка введите его ФИО и нажмите отправить:", reply_markup=markup)
+            bot.register_next_step_handler(cb.message, process_children_name_step)                
         if cb.data == "gardens":
             gardens = models.Garden().all()
             if len(gardens) > 0:
@@ -113,6 +124,34 @@ def process_garden_name_step(message):
         logging.critical(e, exc_info=True)
         bot.reply_to(message, 'Ошибка!')
 
+def process_children_name_step(message):
+    try:
+        chat_id = message.chat.id
+        if message.from_user.id != ADMIN_ID:
+            bot.reply_to(message, 'Только Админ может добавлять детей!')
+        else:
+            name = message.text
+            models.Children().insert(name)            
+            bot.register_next_step_handler(message, process_children_parent_step)
+            bot.reply_to(message, f'Вы добавили ребенка: {name}. Возврат в главное меню')
+    except Exception as e:
+        logging.critical(e, exc_info=True)
+        bot.reply_to(message, 'Ошибка!')
+
+
+def process_children_parent_step(message):
+    try:
+        chat_id = message.chat.id
+        if message.from_user.id != ADMIN_ID:
+            bot.reply_to(message, 'Только Админ может добавлять детей!')
+        else:
+            name = message.text
+            models.Children().insert(name)            
+            bot.register_next_step_handler(message, process_children_parent_step)
+            bot.reply_to(message, f'Вы добавили ребенка: {name}. Возврат в главное меню')
+    except Exception as e:
+        logging.critical(e, exc_info=True)
+        bot.reply_to(message, 'Ошибка!')
 
 
 # Enable saving next step handlers to file "./.handlers-saves/step.save".
