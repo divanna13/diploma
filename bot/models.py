@@ -1,6 +1,8 @@
 import sqlite3
 from datetime import datetime
 
+# https://www.geeksforgeeks.org/python-sqlite-select-data-from-table/
+
 DB_NAME = "database.db"
 
 class Parent():
@@ -43,7 +45,6 @@ ON CONFLICT(telegram_id) DO UPDATE SET
     def __del__(self):
         self.connection.close()
 
-
 class Children():
     def __init__(self, name:str=DB_NAME) -> None:
         self.connection = sqlite3.connect(name)
@@ -66,6 +67,25 @@ INSERT INTO children (fio, parent_id, group_id) VALUES (?, ?, ?)
             (fio, parent_id, group_id))
         self.connection.commit()
     
+    def all_with_groups_and_parents(self):
+        self.cursor = self.connection.cursor()
+        self.cursor.execute('''
+        SELECT 
+            children.child_id, 
+            children.fio,
+            groups.name as group_name,
+            parent.fio as parent_fio
+        FROM children
+        INNER JOIN groups ON children.group_id = groups.group_id
+        INNER JOIN parents ON children.parent_id = parents.parent_id
+        ''')
+        return self.cursor.fetchall() 
+
+    def ungrouped(self):
+        self.cursor = self.connection.cursor()
+        self.cursor.execute('SELECT * FROM children WHERE group_id = 0')
+        return self.cursor.fetchall() 
+
     def __del__(self):
         self.connection.close()
 
@@ -92,9 +112,13 @@ INSERT INTO groups (name, price, garden_id) VALUES (?, ?, ?)
             (name, price, garden_id))
         self.connection.commit()
     
+    def all(self):
+        self.cursor = self.connection.cursor()
+        self.cursor.execute('SELECT * FROM groups ORDER BY name')
+        return self.cursor.fetchall() 
+
     def __del__(self):
         self.connection.close()
-
 
 class Garden():
     def __init__(self, name:str=DB_NAME) -> None:
@@ -110,12 +134,35 @@ class Garden():
                     
     def insert(self, name:str) -> None:
         self.cursor = self.connection.cursor()
-        self.cursor.execute('''
-INSERT INTO gardens (name) VALUES (?)
-''', 
-            (name))
+        self.cursor.execute('''INSERT INTO gardens(name) VALUES (?)''', (name,)) # last comma to make it tuple
         self.connection.commit()
     
+    def all(self):
+        self.cursor = self.connection.cursor()
+        self.cursor.execute('SELECT * FROM gardens ORDER BY name')
+        return self.cursor.fetchall() 
+
+    def all_with_groups(self):
+        self.cursor = self.connection.cursor()
+        self.cursor.execute('''
+        SELECT 
+            gardens.garden_id, 
+            gardens.name as garden_name,
+            price,
+            groups.name as group_name,
+            groups.group_id as group_id
+        FROM gardens
+        INNER JOIN groups ON groups.garden_id = gardens.garden_id
+        ''')
+        return self.cursor.fetchall() 
+
+    def all_with_groups_dict(self):
+        l = all_with_groups()
+        list_accumulator = []
+        for item in l:
+            list_accumulator.append({k: item[k] for k in item.keys()})
+        return list_accumulator
+
     def __del__(self):
         self.connection.close()
 
@@ -140,9 +187,13 @@ class Attendeng():
         self.cursor = self.connection.cursor()
         self.cursor.execute('''
 INSERT INTO attendings (child_id, group_id, created_at) VALUES (?, ?, ?)
-''', 
-            (child_id, group_id, created_at))
+''', (child_id, group_id, created_at))
         self.connection.commit()
+    
+    def all(self):
+        self.cursor = self.connection.cursor()
+        self.cursor.execute('SELECT * FROM attendings ORDER BY created_at DESC')
+        return self.cursor.fetchall() 
     
     def __del__(self):
         self.connection.close()
