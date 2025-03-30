@@ -46,7 +46,7 @@ def parse_message(message):
     if message.from_user.id != ADMIN_ID:
         child_name = message.text        
         markup = quick_markup({
-            'Чмокнуть': {'callback_data': 'chmok_child'},
+            'Подтвердить': {'callback_data': 'accept_child'},
             'Удалить': {'callback_data': 'delete_child'}
         }, row_width=2)
         if child_name != "":
