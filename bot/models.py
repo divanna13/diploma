@@ -156,14 +156,21 @@ class Garden():
         ''')
         return self.cursor.fetchall() 
 
-    def all_with_groups_dict(self):
-        l = all_with_groups()
+def all_with_groups_dict(self):
+    items = self.all_with_groups()  # Более понятное имя переменной
+    list_accumulator = []
+    for item in items:
+        list_accumulator.append(dict(item))  # Просто копируем словарь
+    return list_accumulator
+
+"""     def all_with_groups_dict(self):
+        l = self.all_with_groups()
         list_accumulator = []
         for item in l:
             list_accumulator.append({k: item[k] for k in item.keys()})
-        return list_accumulator
+        return list_accumulator """
 
-    def __del__(self):
+def __del__(self):
         self.connection.close()
 
 class Attendeng():

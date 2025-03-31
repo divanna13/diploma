@@ -10,8 +10,8 @@ logger = logging.getLogger(__name__)
 
 # singer_children_bot
 API_TOKEN = '7686258574:AAHDcexxxffu3lZ8-ddAon-UTpPWWQpreuQ'
-ADMIN_ID = 52919873 # YuryB
-# ADMIN_ID = 664987030 # Anna
+#ADMIN_ID = 52919873 # YuryB
+ADMIN_ID = 664987030 # Anna
 
 
 bot = telebot.TeleBot(API_TOKEN)
@@ -100,16 +100,16 @@ def handle_query(cb):
 
         if cb.data == "groups":
             models.Group()
-            gardens = models.Garden().all_with_groups_dict()  
+            gardens = models.Garden().all_with_groups()  
             # Добавить вывод списка групп для садиков, переменная gardens содержит массив словарей
             # [{garden_id: 1, garden_name: "Прекрасный Сад Будущего №5", price: 100, group_name: "Скворцы", group_id: 1}, ...]
             if len(gardens) > 0:
                 bot.send_message(cb.from_user.id,"Существующие садики/группы:")
+                print(gardens)
                 for g in gardens:
-                    bot.send_message(cb.from_user.id, f' - {g["garden_name"]} / {g["group_name"]} ({g["price"]} ₽)')
+                    bot.send_message(cb.from_user.id, f' - {g[1]} / {g[3]} ({g[2]} ₽)')
             else:
                 bot.send_message(cb.from_user.id,"Нет добавленных садиков и групп! Начните добавлять!")
-
 def process_garden_name_step(message):
     try:
         chat_id = message.chat.id
